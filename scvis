@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+
+# scvis
+# Author : Jiarui Ding <jiarui.ding@gmail.com>
+
+import argparse
+
+from scvis.run import train, map
+
+parser = argparse.ArgumentParser(prog='scvis')
+
+parser.add_argument('--version', action='version', version='0.1.0')
+
+
+# The common arguments
+analysis_parser = argparse.ArgumentParser(add_help=False)
+
+
+analysis_parser.add_argument('--data_matrix_file',
+                             required=True,
+                             help='''The high-dimensional data matrix''')
+
+analysis_parser.add_argument('--config_file',
+                             default=None,
+                             help='''Path to a yaml format configuration file''')
+
+analysis_parser.add_argument('--out_dir',
+                             default="output",
+                             help='''Path for output files''')
+
+analysis_parser.add_argument('--data_label_file',
+                             default=None,
+                             help='''Just used for colouring scatter plots''')
+
+
+# Learning a parametric mapping
+subparsers = parser.add_subparsers()
+
+train_parser = subparsers.add_parser('train',
+                                     parents=[analysis_parser],
+                                     help='''Learning a parametric mapping for high-dimensional single cell data''')
+
+train_parser.add_argument('--pretrained_model_file',
+                          default=None,
+                          help='''A pretrained scvis model, continue to train this model''')
+
+train_parser.add_argument('--normalize',
+                          default=True,
+                          help='''How to normalize the data. Can be True, False, or a number.''')
+
+train_parser.add_argument('--verbose',
+                          default=True,
+                          help='''Print running information''')
+
+train_parser.add_argument('--verbose_interval',
+                          default=50,
+                          type=int,
+                          help='''Print running information after running # of mini-batches''')
+
+train_parser.add_argument('--show_plot',
+                          default=False,
+                          help='''Plot intermediate embedding when verbose=True''')
+
+train_parser.set_defaults(func=train)
+
+
+# Mapping new data
+test_parser = subparsers.add_parser('map',
+                                    parents=[analysis_parser],
+                                    help='''Mapping high-dimensional single cell data to a low-dimensional space
+                                            given a pretrained mapping''')
+
+test_parser.add_argument('--pretrained_model_file',
+                         required=True,
+                         help='''A pretrained scvis model used to map new data''')
+
+test_parser.add_argument('--normalize',
+                         default=False,
+                         help='''How to normalize the data. Can be True, False, or a number.''')
+
+test_parser.set_defaults(func=map)
+
+
+# The arguments
+args = parser.parse_args()
+
+args.func(args)
