@@ -55,14 +55,13 @@ class GaussianVAE(MLP):
 
         with tf.name_scope('encoder-mu'):
             self.bias_mu = self.init_b([self.output_dim])
-            self.weights_mu = tf.nn.dropout(
-                self.init_w([self.layer_size[-1], self.output_dim]),
-                keep_prob=0.9)
+            self.weights_mu = self.init_w([self.layer_size[-1], self.output_dim])
 
         with tf.name_scope('encoder-sigma'):
             self.bias_sigma_square = self.init_b([self.output_dim])
             self.weights_sigma_square = self.init_w([self.layer_size[-1], self.output_dim])
 
+        with tf.name_scope('encoder-parameter'):
             self.encoder_parameter = self.encoder()
 
         with tf.name_scope('sample'):
@@ -136,8 +135,9 @@ class GaussianVAE(MLP):
         return LocationScale(mu, tf.clip_by_value(tf.nn.softplus(sigma_square),
                                                   EPS, MAX_SIGMA_SQUARE))
 
-    def encoder(self):
-        mu = tf.add(tf.matmul(self.hidden_layer_out, self.weights_mu),
+    def encoder(self, prob=0.9):
+        weights_mu = tf.nn.dropout(self.weights_mu, prob)
+        mu = tf.add(tf.matmul(self.hidden_layer_out, weights_mu),
                     self.bias_mu)
         sigma_square = tf.add(tf.matmul(self.hidden_layer_out,
                                         self.weights_sigma_square),

@@ -204,7 +204,7 @@ class SCVIS(object):
         return status
 
     def encode(self, x):
-        var = self.vae.encoder()
+        var = self.vae.encoder(prob=1.0)
         feed_dict = {self.x: x}
 
         return self.sess.run(var, feed_dict=feed_dict)
