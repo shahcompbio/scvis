@@ -22,7 +22,7 @@ CURR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 def train(args):
 
-    x, y, architecture, hyperparameter, train_data, model, out_dir, name = _init_model(args)
+    x, y, architecture, hyperparameter, train_data, model, out_dir, name = _init_model(args, 'train')
     iter_per_epoch = round(x.shape[0] / hyperparameter['batch_size'])
 
     max_iter = int(iter_per_epoch * hyperparameter['max_epoch'])
@@ -86,7 +86,7 @@ def train(args):
 
 
 def map(args):
-    x, y, architecture, hyperparameter, train_data, model, out_dir, name = _init_model(args)
+    x, y, architecture, hyperparameter, train_data, model, out_dir, name = _init_model(args, 'map')
 
     name = "_".join([name, "map"])
     _save_result(x, y, model, out_dir, name)
@@ -94,19 +94,8 @@ def map(args):
     return()
 
 
-def _init_model(args):
+def _init_model(args, mode):
     x = pd.read_csv(args.data_matrix_file, sep='\t').values
-
-    if args.normalize is True:
-        x /= np.max(np.abs(x))
-    elif args.normalize is not False:
-        x /= float(args.normalize)
-
-    y = None
-    if args.data_label_file is not None:
-        label = pd.read_csv(args.data_label_file, sep='\t').values
-        label = pd.Categorical(label[:, 0])
-        y = label.codes
 
     config = {}
     config_file = CURR_PATH + '/config/model_config.yaml'
@@ -125,13 +114,33 @@ def _init_model(args):
     if hyperparameter['batch_size'] > x.shape[0]:
         hyperparameter.update({'batch_size': x.shape[0]})
 
+    model = SCVIS(architecture, hyperparameter)
+    normalizer = 1.0
+    if args.pretrained_model_file is not None:
+        model.load_sess(args.pretrained_model_file)
+        normalizer = model.sess.get_normalizr()
+
+    if mode == 'train':
+        if args.normalize is True:
+            normalizer = np.max(np.abs(x))
+        elif args.normalize is not False:
+            normalizer = float(args.normalize)
+        model.set_normalizer(normalizer)
+    else:
+        if args.normalize is not False:
+            normalizer = float(args.normalize)
+
+    x /= normalizer
+
+    y = None
+    if args.data_label_file is not None:
+        label = pd.read_csv(args.data_label_file, sep='\t').values
+        label = pd.Categorical(label[:, 0])
+        y = label.codes
+
     # fixed random seed
     np.random.seed(0)
     train_data = data.DataSet(x, y)
-    model = SCVIS(architecture, hyperparameter)
-
-    if args.pretrained_model_file is not None:
-        model.load_sess(args.pretrained_model_file)
 
     out_dir = args.out_dir
     if not os.path.isdir(out_dir):

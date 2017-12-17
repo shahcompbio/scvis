@@ -17,6 +17,7 @@ class SCVIS(object):
 
         tf.reset_default_graph()
         self.sess = tf.InteractiveSession()
+        self.normalizer = tf.Variable(1.0, name='normalizer', trainable=False)
 
         self.architecture, self.hyperparameter = architecture, hyperparameter
         self.regularizer_l2 = self.hyperparameter['regularizer_l2']
@@ -267,3 +268,10 @@ class SCVIS(object):
         feed_dict = {self.x: x, self.batch_size: x.shape[0]}
 
         return self.sess.run(log_likelihood - kl_divergence, feed_dict=feed_dict)
+
+    def set_normalizer(self, normalizer=1.0):
+        normalizer_op = self.normalizer.assign(normalizer)
+        self.sess.run(normalizer_op)
+
+    def get_normalizer(self):
+        return self.sess.run(self.normalizer)
