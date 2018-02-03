@@ -45,21 +45,25 @@ train_parser.add_argument('--pretrained_model_file',
                           help='''A pretrained scvis model, continue to train this model''')
 
 train_parser.add_argument('--normalize',
-                          default=True,
-                          help='''How to normalize the data. Can be True, False, or a number.''')
+                          type=float,
+                          required=False,
+                          help='''The data will be divided by this number if provided (default: the maximum value).''')
 
 train_parser.add_argument('--verbose',
-                          default=True,
+                          required=False,
+                          action='store_true',
                           help='''Print running information''')
 
 train_parser.add_argument('--verbose_interval',
                           default=50,
+                          required=False,
                           type=int,
                           help='''Print running information after running # of mini-batches''')
 
 train_parser.add_argument('--show_plot',
-                          default=False,
-                          help='''Plot intermediate embedding when verbose=True''')
+                          required=False,
+                          action='store_true',
+                          help='''Plot intermediate embedding when this parameter is set''')
 
 train_parser.set_defaults(func=train)
 
@@ -75,8 +79,9 @@ test_parser.add_argument('--pretrained_model_file',
                          help='''A pretrained scvis model used to map new data''')
 
 test_parser.add_argument('--normalize',
-                         default=False,
-                         help='''How to normalize the data. Can be True, False, or a number.''')
+                         required=False,
+                         type=float,
+                         help='''Data will be divided by this number if provided (default: from the trained model)''')
 
 test_parser.set_defaults(func=map)
 

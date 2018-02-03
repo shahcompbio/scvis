@@ -22,13 +22,14 @@ CURR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 def train(args):
 
-    x, y, architecture, hyperparameter, train_data, model, out_dir, name = _init_model(args, 'train')
+    x, y, architecture, hyperparameter, train_data, model, normalizer, out_dir, name = \
+        _init_model(args, 'train')
     iter_per_epoch = round(x.shape[0] / hyperparameter['batch_size'])
 
     max_iter = int(iter_per_epoch * hyperparameter['max_epoch'])
 
-    if max_iter < 2000:
-        max_iter = 2000
+    if max_iter < 3000:
+        max_iter = 3000
     elif max_iter > 30000:
         max_iter = np.max([30000, iter_per_epoch * 2])
 
@@ -41,6 +42,7 @@ def train(args):
                       plot_dir=os.path.join(out_dir, (name+"_intermediate_result")),
                       max_iter=max_iter,
                       pretrained_model=args.pretrained_model_file)
+    model.set_normalizer(normalizer)
 
     # Save the trained model
     out_dir = args.out_dir
@@ -118,16 +120,15 @@ def _init_model(args, mode):
     normalizer = 1.0
     if args.pretrained_model_file is not None:
         model.load_sess(args.pretrained_model_file)
-        normalizer = model.sess.get_normalizr()
+        normalizer = model.get_normalizer()
 
     if mode == 'train':
-        if args.normalize is True:
-            normalizer = np.max(np.abs(x))
-        elif args.normalize is not False:
+        if args.normalize is not None:
             normalizer = float(args.normalize)
-        model.set_normalizer(normalizer)
+        else:
+            normalizer = np.max(np.abs(x))
     else:
-        if args.normalize is not False:
+        if args.normalize is not None:
             normalizer = float(args.normalize)
 
     x /= normalizer
@@ -154,7 +155,7 @@ def _init_model(args, mode):
                      'activation', str(architecture['activation']),
                      'seed', str(hyperparameter['seed'])])
 
-    return x, y, architecture, hyperparameter, train_data, model, out_dir, name
+    return x, y, architecture, hyperparameter, train_data, model, normalizer, out_dir, name
 
 
 def _save_result(x, y, model, out_dir, name):

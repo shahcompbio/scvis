@@ -49,7 +49,7 @@ class SCVIS(object):
         self.decoder_parameter = self.vae.decoder_parameter
         self.dof = tf.Variable(tf.constant(1.0, shape=[self.architecture['input_dimension']]),
                                trainable=True, name='dof')
-        self.dof = tf.clip_by_value(self.dof, 0.1, 100, name='dof')
+        self.dof = tf.clip_by_value(self.dof, 0.1, 10, name='dof')
 
         with tf.name_scope('ELBO'):
             self.weight = tf.clip_by_value(tf.reduce_sum(self.p, 0), 0.01, 2.0)
@@ -85,8 +85,9 @@ class SCVIS(object):
                 self.optimizer = tf.train.AdagradOptimizer(learning_rate)
             elif self.hyperparameter['optimization']['method'].lower() == 'adam':
                 self.optimizer = tf.train.AdamOptimizer(learning_rate,
+                                                        beta1=0.9,
                                                         beta2=0.999,
-                                                        epsilon=0.0001)
+                                                        epsilon=0.001)
 
             gradient_clipped = self.clip_gradient()
 
@@ -98,7 +99,7 @@ class SCVIS(object):
         trainable_variable = self.sess.graph.get_collection('trainable_variables')
         grad_and_var = self.optimizer.compute_gradients(self.obj, trainable_variable)
 
-        grad_and_var = [(grad, var) for grad, var in grad_and_var if var is not None]
+        grad_and_var = [(grad, var) for grad, var in grad_and_var if grad is not None]
         grad, var = zip(*grad_and_var)
         grad, global_grad_norm = tf.clip_by_global_norm(grad, clip_norm=clip_norm)
 
