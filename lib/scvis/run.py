@@ -88,7 +88,8 @@ def train(args):
 
 
 def map(args):
-    x, y, architecture, hyperparameter, train_data, model, out_dir, name = _init_model(args, 'map')
+    x, y, architecture, hyperparameter, train_data, model, _, out_dir, name = \
+        _init_model(args, 'map')
 
     name = "_".join([name, "map"])
     _save_result(x, y, model, out_dir, name)
